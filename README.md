@@ -7,7 +7,7 @@ Note that there's an official repository of generic C# implementation.  https://
 
 ## Using HSLuv-Unity
 
-Put `Assets/Runtime/Hsluv.cs` into your project.  It contains the following [standard HSLuv functions](https://www.hsluv.org/implementations/).
+Put `Assets/Hsluv/Runtime/Hsluv.cs` into your project.  It contains the following [standard HSLuv functions](https://www.hsluv.org/implementations/).
 
 ```C#
 namespace Hsluv {
@@ -21,4 +21,4 @@ namespace Hsluv {
 ```
 
 
-See `Assets/Examples/` for details of other utility functions.
+See `Assets/Hsluv/Examples/` for details of other utility functions.
