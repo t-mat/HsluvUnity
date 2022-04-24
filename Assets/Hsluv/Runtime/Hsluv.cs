@@ -2,6 +2,8 @@
 // SPDX-FileCopyrightText: Copyright (c) Takayuki Matsuoka
 // SPDX-License-Identifier: MIT
 
+using System;
+using System.Text;
 using UnityEngine;
 
 namespace Hsluv {
@@ -16,19 +18,23 @@ namespace Hsluv {
         public static Vector3 HpluvToRgb(Vector3 v) => HpluvToSrgb(v);
         public static Vector3 RgbToHpluv(Vector3 v) => SrgbToHpluv(v);
         public static Vector3 LuvToRgb(Vector3 v)   => LuvToSrgb(v);
+        public static Vector3 RgbToLuv(Vector3 v)   => SrgbToLuv(v);
 
         //
         //  Color conversion
         //
 
         // Linear RGB color conversion
-        public static Vector3 LchToLrgb(Vector3 v)   => Impl.XYZToLrgb(Impl.LuvToXyz(Impl.LchToLuv(v)));
-        public static Vector3 LrgbToLch(Vector3 v)   => Impl.LuvToLch(Impl.XYZToLuv(Impl.LrgbToXyz(v)));
+        public static Vector3 LchToLrgb(Vector3 v)   => Impl.XyzToLrgb(Impl.LuvToXyz(Impl.LchToLuv(v)));
+        public static Vector3 LrgbToLch(Vector3 v)   => Impl.LuvToLch(Impl.XyzToLuv(Impl.LrgbToXyz(v)));
         public static Vector3 HsluvToLrgb(Vector3 v) => LchToLrgb(Impl.HsluvToLch(v));
         public static Vector3 LrgbToHsluv(Vector3 v) => Impl.LchToHsluv(LrgbToLch(v));
         public static Vector3 HpluvToLrgb(Vector3 v) => LchToLrgb(Impl.HpluvToLch(v));
         public static Vector3 LrgbToHpluv(Vector3 v) => Impl.LchToHpluv(LrgbToLch(v));
-        public static Vector3 LuvToLrgb(Vector3 v)   => Impl.XYZToLrgb(Impl.LuvToXyz(v));
+        public static Vector3 LuvToLrgb(Vector3 v)   => Impl.XyzToLrgb(Impl.LuvToXyz(v));
+        public static Vector3 LrgbToLuv(Vector3 v)   => Impl.XyzToLuv(Impl.LrgbToXyz(v));
+        public static Vector3 XyzToLrgb(Vector3 v)   => Impl.XyzToLrgb(v);
+        public static Vector3 LrgbToXyz(Vector3 v)   => Impl.LrgbToXyz(v);
 
         // sRGB (Gamma RGB) color conversion
         public static Vector3 LchToSrgb(Vector3 v)   => Impl.LrgbToSrgb(LchToLrgb(v));
@@ -38,13 +44,32 @@ namespace Hsluv {
         public static Vector3 SrgbToLch(Vector3 v)   => LrgbToLch(Impl.SrgbToLrgb(v));
         public static Vector3 SrgbToHsluv(Vector3 v) => LrgbToHsluv(Impl.SrgbToLrgb(v));
         public static Vector3 SrgbToHpluv(Vector3 v) => LrgbToHpluv(Impl.SrgbToLrgb(v));
+        public static Vector3 SrgbToLuv(Vector3 v)   => LrgbToLuv(Impl.SrgbToLrgb(v));
+        public static Vector3 XyzToSrgb(Vector3 v)   => Impl.LrgbToSrgb(Impl.XyzToLrgb(v));
+        public static Vector3 SrgbToXyz(Vector3 v)   => Impl.LrgbToXyz(Impl.SrgbToLrgb(v));
 
-        //
         // HSL Component interpolation
-        //
         public static float InterpolateH(float a, float b, float t) => Impl.NormalizeH(a + Impl.NormalizeDh(b - a) * t);
         public static float InterpolateS(float a, float b, float t) => Mathf.Lerp(a, b, t);
         public static float InterpolateL(float a, float b, float t) => Mathf.Lerp(a, b, t);
+
+        // Color space conversion
+        public static Vector3 HpluvToLch(Vector3 v) => Impl.HpluvToLch(v);
+        public static Vector3 HsluvToLch(Vector3 v) => Impl.HsluvToLch(v);
+        public static Vector3 LchToLuv(Vector3 v)   => Impl.LchToLuv(v);
+        public static Vector3 LuvToXyz(Vector3 v)   => Impl.LuvToXyz(v);
+        public static Vector3 XyzToLuv(Vector3 v)   => Impl.XyzToLuv(v);
+        public static Vector3 LuvToLch(Vector3 v)   => Impl.LuvToLch(v);
+        public static Vector3 LchToHsluv(Vector3 v) => Impl.LchToHsluv(v);
+        public static Vector3 LchToHpluv(Vector3 v) => Impl.LchToHpluv(v);
+
+        // Hex conversion
+        public static string  RgbToHex(Vector3 v)  => SrgbToHex(v);
+        public static Vector3 HexToRgb(string s)   => HexToSrgb(s);
+        public static string  SrgbToHex(Vector3 v) => Impl.SrgbToHex(v);
+        public static Vector3 HexToSrgb(string s)  => Impl.HexToSrgb(s);
+        public static string  LrgbToHex(Vector3 v) => Impl.SrgbToHex(Impl.LrgbToSrgb(v));
+        public static Vector3 HexToLrgb(string s)  => Impl.SrgbToLrgb(Impl.HexToSrgb(s));
     }
 
     //
@@ -505,7 +530,7 @@ namespace Hsluv {
         // CIE XYZ(D65) -> Linear RGB
         // https://github.com/hsluv/hsluv/blob/e15d91f432d529cc426ccd1d57a3c3c593e01a05/haxe/src/hsluv/Hsluv.hx#L147
         // https://en.wikipedia.org/wiki/SRGB#Specification_of_the_transformation
-        internal static Vector3 XYZToLrgb(Vector3 xyz)
+        internal static Vector3 XyzToLrgb(Vector3 xyz)
         {
             var cieMx = new Vector3(3.2409699419045214f,   -1.5373831775700935f,  -0.49861076029300328f);
             var cieMy = new Vector3(-0.96924363628087983f, 1.8759675015077207f,   0.041555057407175613f);
@@ -533,7 +558,7 @@ namespace Hsluv {
 
         // CIE XYZ -> CIE LUV
         // https://en.wikipedia.org/wiki/CIELUV#The_forward_transformation
-        internal static Vector3 XYZToLuv(Vector3 xyz)
+        internal static Vector3 XyzToLuv(Vector3 xyz)
         {
             float x = xyz.x;
             float y = xyz.y;
@@ -677,6 +702,35 @@ namespace Hsluv {
                 h = 0;
             }
             return new Vector3(h, s, l);
+        }
+
+        // Hex conversion
+        internal static string SrgbToHex(Vector3 srgb)
+        {
+            var sb = new StringBuilder();
+            int r  = (int)(srgb.x * 255.0f);
+            int g  = (int)(srgb.y * 255.0f);
+            int b  = (int)(srgb.z * 255.0f);
+            sb.Append($"#{r:x2}{g:x2}{b:x2}");
+            return sb.ToString();
+        }
+
+        // hex7 : "#RRGGBB"
+        internal static Vector3 HexToSrgb(string hex7)
+        {
+            if (hex7 == null || hex7.Length != 7 || hex7[0] != '#') {
+                return default;
+            }
+            var hex = new char[6];
+            for (int i = 0; i < 6; i++) {
+                hex[i] = hex7[i + 1];
+            }
+            int i32 = Convert.ToInt32(new string(hex), fromBase: 16);
+            return new Vector3(
+                ((i32 / 256 / 256) % 256) / 255.0f,
+                ((i32 / 256)       % 256) / 255.0f,
+                ((i32)             % 256) / 255.0f
+            );
         }
     }
 }
