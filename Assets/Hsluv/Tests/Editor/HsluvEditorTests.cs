@@ -9,13 +9,23 @@ using System.Text;
 using UnityEngine;
 using UnityEditor;
 using Debug = UnityEngine.Debug;
+#if UNITY_INCLUDE_TESTS
+using NUnit.Framework;
+#endif
 
 namespace Hsluv {
-    internal static class HsluvTest {
+    internal static class HsluvEditorTests {
+#if UNITY_INCLUDE_TESTS
+        [Test]
+        public static void InvokeHsluvEditorTests() => Assert.That(Test());
+#else
         [MenuItem("Help/HSLuv/Test")]
-        private static void Test()
+        private static void TestMenuItem() => Test();
+#endif
+
+        private static bool Test()
         {
-            const string               snapshotPath    = "Assets/Hsluv/Editor/Tests/snapshots~/snapshot-rev4.json";
+            const string               snapshotPath    = "Assets/Hsluv/Tests/Editor/snapshots~/snapshot-rev4.json";
             string                     snapshotJson    = System.IO.File.ReadAllText(snapshotPath);
             IEnumerable<SnapshotEntry> snapshotEntries = DeserializeSnapshotEntries(snapshotJson);
 
@@ -42,8 +52,10 @@ namespace Hsluv {
 
             if (successCount == expectedSuccessCount && testCount == expectedTestCount) {
                 LogInfo($"OK");
+                return true;
             } else {
                 LogError($"NG : error={errorCount}, success={successCount}/{expectedSuccessCount}");
+                return false;
             }
         }
 

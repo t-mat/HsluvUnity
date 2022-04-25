@@ -21,4 +21,4 @@ namespace Hsluv {
 ```
 
 
-See `Assets/Hsluv/Examples/` for details of other utility functions.
+See `Assets/Hsluv/Samples~/` for details of other utility functions.
