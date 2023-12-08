@@ -76,4 +76,5 @@ crashlytics-build.properties
 /.idea/
 /Packages/
 /ProjectSettings/
+/Assets/Hsluv/Samples/
 *.meta
