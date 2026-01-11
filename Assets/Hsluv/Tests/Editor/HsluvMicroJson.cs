@@ -17,10 +17,9 @@ namespace Hsluv {
                 if (string.IsNullOrEmpty(jsonString)) {
                     return null;
                 }
-                using (var reader = new StringReader(jsonString)) {
-                    var parser = new Parser(reader);
-                    return parser.ParseValue();
-                }
+                using StringReader reader = new(jsonString);
+                Parser             parser = new(reader);
+                return parser.ParseValue();
             }
 
             //
@@ -56,27 +55,27 @@ namespace Hsluv {
 
             private object ParseByToken(Token token)
             {
-                switch (token) {
-                    case Token.CURLY_OPEN:   return ParseObject();
-                    case Token.SQUARED_OPEN: return ParseArray();
-                    case Token.STRING:       return ParseString();
-                    case Token.NUMBER:       return double.TryParse(NextWord(), out double d) ? d : 0.0;
-                    case Token.TRUE:         return true;
-                    case Token.FALSE:        return false;
-                    case Token.NULL:         return null;
-                    default:                 return null;
-                }
+                return token switch
+                {
+                    Token.CURLY_OPEN => ParseObject(),
+                    Token.SQUARED_OPEN => ParseArray(),
+                    Token.STRING => ParseString(),
+                    Token.NUMBER => double.TryParse(NextWord(), out double d) ? d : 0.0,
+                    Token.TRUE => true,
+                    Token.FALSE => false,
+                    _ => null
+                };
             }
 
             private Dictionary<string, object> ParseObject()
             {
                 DitchChar(); // '{' : ditch opening brace
-                var table = new Dictionary<string, object>();
+                Dictionary<string, object> table = new();
                 while (true) {
                     switch (NextToken()) {
-                        case Token.NONE:        return null;
+                        case Token.NONE: return null;
                         case Token.CURLY_CLOSE: return table;
-                        case Token.COMMA:       continue;
+                        case Token.COMMA: continue;
                         default:
                             // name
                             string name = ParseString();
@@ -98,13 +97,13 @@ namespace Hsluv {
             private List<object> ParseArray()
             {
                 DitchChar(); // '[' : ditch opening bracket
-                var array = new List<object>();
+                List<object> array = new();
                 while (true) {
                     Token nextToken = NextToken();
                     switch (nextToken) {
-                        case Token.NONE:          return null;
+                        case Token.NONE: return null;
                         case Token.SQUARED_CLOSE: return array;
-                        case Token.COMMA:         continue;
+                        case Token.COMMA: continue;
                         default:
                             array.Add(ParseByToken(nextToken));
                             break;
@@ -114,14 +113,14 @@ namespace Hsluv {
 
             private string ParseString()
             {
-                var sb = new StringBuilder();
+                StringBuilder sb = new();
                 DitchChar(); // '"' : ditch opening quote
                 while (HasChar()) {
                     char d = NextChar();
                     if (d == '"') {
                         break;
                     } else if (d == '\\') {
-                        if (!HasChar()) {
+                        if (! HasChar()) {
                             break;
                         }
                         char c = NextChar();
@@ -145,11 +144,11 @@ namespace Hsluv {
                                 sb.Append('\t');
                                 break;
                             case 'u':
-                                var hex = new char[4];
+                                char[] hex = new char[4];
                                 for (int i = 0; i < 4; i++) {
                                     hex[i] = NextChar();
                                 }
-                                sb.Append((char)Convert.ToInt32(new string(hex), 16));
+                                sb.Append((char)Convert.ToInt32(new(hex), 16));
                                 break;
                         }
                     } else {
@@ -163,11 +162,11 @@ namespace Hsluv {
             {
                 while (char.IsWhiteSpace(PeekChar())) {
                     DitchChar();
-                    if (!HasChar()) {
+                    if (! HasChar()) {
                         break;
                     }
                 }
-                if (!HasChar()) {
+                if (! HasChar()) {
                     return Token.NONE;
                 }
                 switch (PeekChar()) {
@@ -196,26 +195,27 @@ namespace Hsluv {
                     case '9':
                     case '-': return Token.NUMBER;
                 }
-                switch (NextWord()) {
-                    case "false": return Token.FALSE;
-                    case "true":  return Token.TRUE;
-                    case "null":  return Token.NULL;
-                }
-                return Token.NONE;
+                return NextWord() switch
+                {
+                    "false" => Token.FALSE,
+                    "true" => Token.TRUE,
+                    "null" => Token.NULL,
+                    _ => Token.NONE
+                };
             }
 
             private const string WordBreak = "{}[],:\"";
 
             private string NextWord()
             {
-                var sb = new StringBuilder();
+                StringBuilder sb = new();
                 while (true) {
                     char c = PeekChar();
                     if (char.IsWhiteSpace(c) || WordBreak.IndexOf(c) != -1) {
                         break;
                     }
                     sb.Append(NextChar());
-                    if (!HasChar()) {
+                    if (! HasChar()) {
                         break;
                     }
                 }

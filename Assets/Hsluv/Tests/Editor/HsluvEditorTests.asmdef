@@ -1,8 +1,10 @@
 {
     "name": "HsluvEditorTests",
+    "rootNamespace": "",
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
+        "Unity.Mathematics",
         "Hsluv"
     ],
     "includePlatforms": [

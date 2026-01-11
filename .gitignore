@@ -78,3 +78,5 @@ crashlytics-build.properties
 /ProjectSettings/
 /Assets/Hsluv/Samples/
 *.meta
+*.unity
+*.cmd

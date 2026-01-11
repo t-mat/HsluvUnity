@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using UnityEditor;
+using Unity.Mathematics;
 using Debug = UnityEngine.Debug;
 #if UNITY_INCLUDE_TESTS
 using NUnit.Framework;
@@ -39,8 +39,8 @@ namespace Hsluv {
             void LogError(string s) => Debug.LogError($"{s}");
 
             foreach (SnapshotEntry snapshot in snapshotEntries) {
-                var        actualResult = new ActualResult(snapshot);
-                TestResult testResult   = Compare(snapshot, actualResult);
+                ActualResult actualResult = new(snapshot);
+                TestResult   testResult   = Compare(snapshot, actualResult);
                 if (testResult.Ok) {
                     successCount += 1;
                 } else {
@@ -65,63 +65,63 @@ namespace Hsluv {
             ActualResult actualResult,
             TestResult testResult)
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.Append($"entry \"{snapshot.HexString}\"");
-            if (!testResult.RgbFromHex) {
+            if (! testResult.RgbFromHex) {
                 sb.Append($"NG: rgbFromHex   : expected={snapshot.RGB}, actual={actualResult.RgbFromHex}\n");
             }
-            if (!testResult.XyzFromRgb) {
+            if (! testResult.XyzFromRgb) {
                 sb.Append($"NG: xyzFromRgb   : expected={snapshot.XYZ}, actual={actualResult.XyzFromRgb}\n");
             }
-            if (!testResult.LuvFromXyz) {
+            if (! testResult.LuvFromXyz) {
                 sb.Append($"NG: luvFromXyz   : expected={snapshot.Luv}, actual={actualResult.LuvFromXyz}n");
             }
-            if (!testResult.LchFromLuv) {
+            if (! testResult.LchFromLuv) {
                 sb.Append($"NG: lchFromLuv   : expected={snapshot.Lch}, actual={actualResult.LchFromLuv}n");
             }
-            if (!testResult.HsluvFromLch) {
+            if (! testResult.HsluvFromLch) {
                 sb.Append($"NG: hsluvFromLch : expected={snapshot.Hsluv}, actual={actualResult.HsluvFromLch}n");
             }
-            if (!testResult.HpluvFromLch) {
+            if (! testResult.HpluvFromLch) {
                 sb.Append($"NG: hpluvFromLch : expected={snapshot.Hpluv}, actual={actualResult.HpluvFromLch}n");
             }
-            if (!testResult.HsluvFromHex) {
+            if (! testResult.HsluvFromHex) {
                 sb.Append($"NG: hsluvFromHex : expected={snapshot.Hsluv}, actual={actualResult.HsluvFromHex}n");
             }
-            if (!testResult.HpluvFromHex) {
+            if (! testResult.HpluvFromHex) {
                 sb.Append($"NG: hpluvFromHex : expected={snapshot.Hpluv}, actual={actualResult.HpluvFromHex}n");
             }
-            if (!testResult.LchFromHsluv) {
+            if (! testResult.LchFromHsluv) {
                 sb.Append($"NG: lchFromHsluv : expected={snapshot.Lch}, actual={actualResult.LchFromHsluv}n");
             }
-            if (!testResult.LchFromHpluv) {
+            if (! testResult.LchFromHpluv) {
                 sb.Append($"NG: lchFromHpluv : expected={snapshot.Lch}, actual={actualResult.LchFromHpluv}n");
             }
-            if (!testResult.LuvFromLch) {
+            if (! testResult.LuvFromLch) {
                 sb.Append($"NG: luvFromLch   : expected={snapshot.Luv}, actual={actualResult.LuvFromLch}n");
             }
-            if (!testResult.XyzFromLuv) {
+            if (! testResult.XyzFromLuv) {
                 sb.Append($"NG: xyzFromLuv   : expected={snapshot.XYZ}, actual={actualResult.XyzFromLuv}n");
             }
-            if (!testResult.RgbFromXyz) {
+            if (! testResult.RgbFromXyz) {
                 sb.Append($"NG: rgbFromXyz   : expected={snapshot.RGB}, actual={actualResult.RgbFromXyz}n");
             }
-            if (!testResult.HexFromRgb) {
+            if (! testResult.HexFromRgb) {
                 sb.Append($"NG: hexFromRgb   : expected={snapshot.HexString}, actual={actualResult.HexFromRgb}n");
             }
-            if (!testResult.HexFromHsluv) {
+            if (! testResult.HexFromHsluv) {
                 sb.Append($"NG: hexFromHsluv : expected={snapshot.HexString}, actual={actualResult.HexFromHsluv}n");
             }
-            if (!testResult.HexFromHpluv) {
+            if (! testResult.HexFromHpluv) {
                 sb.Append($"NG: hexFromHpluv : expected={snapshot.HexString}, actual={actualResult.HexFromHpluv}n");
             }
             logError(sb.ToString());
         }
 
-        private static IEnumerable<SnapshotEntry> DeserializeSnapshotEntries(string snapshotJsonString)
-            => MicroJson.Deserialize(snapshotJsonString) is Dictionary<string, object> snapshot
+        private static IEnumerable<SnapshotEntry> DeserializeSnapshotEntries(string snapshotJsonString) =>
+            MicroJson.Deserialize(snapshotJsonString) is Dictionary<string, object> snapshot
                 ? snapshot.Select(kv => new SnapshotEntry(kv)).ToList()
-                : default(IEnumerable<SnapshotEntry>);
+                : null;
 
         private struct SnapshotEntry {
             public readonly string  HexString; // "#RRGGBB" in sRGB color space
@@ -135,18 +135,17 @@ namespace Hsluv {
             public SnapshotEntry(KeyValuePair<string, object> kv)
             {
                 if (kv.Value is Dictionary<string, object> values) {
-                    Double3 GetDouble3(IList<object> o) => new Double3((double)o[0], (double)o[1], (double)o[2]);
+                    Double3 GetDouble3(IList<object> o) => new((double)o[0], (double)o[1], (double)o[2]);
 
                     HexString = kv.Key;
-                    // new Double3(Hsluv.HexToSrgb(kv.Key));
-                    Lch   = GetDouble3(values["lch"] as IList<object>);
-                    Luv   = GetDouble3(values["luv"] as IList<object>);
-                    RGB   = GetDouble3(values["rgb"] as IList<object>);
-                    XYZ   = GetDouble3(values["xyz"] as IList<object>);
-                    Hpluv = GetDouble3(values["hpluv"] as IList<object>);
-                    Hsluv = GetDouble3(values["hsluv"] as IList<object>);
+                    Lch       = GetDouble3(values["lch"] as IList<object>);
+                    Luv       = GetDouble3(values["luv"] as IList<object>);
+                    RGB       = GetDouble3(values["rgb"] as IList<object>);
+                    XYZ       = GetDouble3(values["xyz"] as IList<object>);
+                    Hpluv     = GetDouble3(values["hpluv"] as IList<object>);
+                    Hsluv     = GetDouble3(values["hsluv"] as IList<object>);
                 } else {
-                    HexString = default;
+                    HexString = null;
                     Lch       = default;
                     Luv       = default;
                     RGB       = default;
@@ -159,46 +158,46 @@ namespace Hsluv {
 
         private struct ActualResult {
             // forward functions
-            public readonly Vector3 RgbFromHex;
-            public readonly Vector3 XyzFromRgb;
-            public readonly Vector3 LuvFromXyz;
-            public readonly Vector3 LchFromLuv;
-            public readonly Vector3 HsluvFromLch;
-            public readonly Vector3 HpluvFromLch;
-            public readonly Vector3 HsluvFromHex;
-            public readonly Vector3 HpluvFromHex;
+            public readonly float3 RgbFromHex;
+            public readonly float3 XyzFromRgb;
+            public readonly float3 LuvFromXyz;
+            public readonly float3 LchFromLuv;
+            public readonly float3 HsluvFromLch;
+            public readonly float3 HpluvFromLch;
+            public readonly float3 HsluvFromHex;
+            public readonly float3 HpluvFromHex;
 
             // backward functions
-            public readonly Vector3 LchFromHsluv;
-            public readonly Vector3 LchFromHpluv;
-            public readonly Vector3 LuvFromLch;
-            public readonly Vector3 XyzFromLuv;
-            public readonly Vector3 RgbFromXyz;
-            public readonly string  HexFromRgb;
-            public readonly string  HexFromHsluv;
-            public readonly string  HexFromHpluv;
+            public readonly float3 LchFromHsluv;
+            public readonly float3 LchFromHpluv;
+            public readonly float3 LuvFromLch;
+            public readonly float3 XyzFromLuv;
+            public readonly float3 RgbFromXyz;
+            public readonly string HexFromRgb;
+            public readonly string HexFromHsluv;
+            public readonly string HexFromHpluv;
 
             public ActualResult(SnapshotEntry snapshot)
             {
                 // forward functions
-                RgbFromHex   = Hsluv.HexToSrgb(snapshot.HexString);
-                XyzFromRgb   = Hsluv.SrgbToXyz(snapshot.RGB.ToVector3());
-                LuvFromXyz   = Hsluv.XyzToLuv(snapshot.XYZ.ToVector3());
-                LchFromLuv   = Hsluv.LuvToLch(snapshot.Luv.ToVector3());
-                HsluvFromLch = Hsluv.LchToHsluv(snapshot.Lch.ToVector3());
-                HpluvFromLch = Hsluv.LchToHpluv(snapshot.Lch.ToVector3());
+                RgbFromHex   = Hsluv.HexToSrgbFloat3(snapshot.HexString);
+                XyzFromRgb   = Hsluv.SrgbToXyz(snapshot.RGB.ToFloat3());
+                LuvFromXyz   = Hsluv.XyzToLuv(snapshot.XYZ.ToFloat3());
+                LchFromLuv   = Hsluv.LuvToLch(snapshot.Luv.ToFloat3());
+                HsluvFromLch = Hsluv.LchToHsluv(snapshot.Lch.ToFloat3());
+                HpluvFromLch = Hsluv.LchToHpluv(snapshot.Lch.ToFloat3());
                 HsluvFromHex = Hsluv.SrgbToHsluv(RgbFromHex);
                 HpluvFromHex = Hsluv.SrgbToHpluv(RgbFromHex);
 
                 // backward functions
-                LchFromHsluv = Hsluv.HsluvToLch(snapshot.Hsluv.ToVector3());
-                LchFromHpluv = Hsluv.HpluvToLch(snapshot.Hpluv.ToVector3());
-                LuvFromLch   = Hsluv.LchToLuv(snapshot.Lch.ToVector3());
-                XyzFromLuv   = Hsluv.LuvToXyz(snapshot.Luv.ToVector3());
-                RgbFromXyz   = Hsluv.XyzToSrgb(snapshot.XYZ.ToVector3());
-                HexFromRgb   = Hsluv.RgbToHex(snapshot.RGB.ToVector3()); // #RRGGBB
-                HexFromHsluv = Hsluv.RgbToHex(Hsluv.HsluvToSrgb(snapshot.Hsluv.ToVector3()));
-                HexFromHpluv = Hsluv.RgbToHex(Hsluv.HpluvToSrgb(snapshot.Hpluv.ToVector3()));
+                LchFromHsluv = Hsluv.HsluvToLch(snapshot.Hsluv.ToFloat3());
+                LchFromHpluv = Hsluv.HpluvToLch(snapshot.Hpluv.ToFloat3());
+                LuvFromLch   = Hsluv.LchToLuv(snapshot.Lch.ToFloat3());
+                XyzFromLuv   = Hsluv.LuvToXyz(snapshot.Luv.ToFloat3());
+                RgbFromXyz   = Hsluv.XyzToSrgb(snapshot.XYZ.ToFloat3());
+                HexFromRgb   = Hsluv.RgbToHex(snapshot.RGB.ToFloat3()); // #RRGGBB
+                HexFromHsluv = Hsluv.RgbToHex(Hsluv.HsluvToSrgb(snapshot.Hsluv.ToFloat3()));
+                HexFromHpluv = Hsluv.RgbToHex(Hsluv.HpluvToSrgb(snapshot.Hpluv.ToFloat3()));
             }
         }
 
@@ -224,23 +223,6 @@ namespace Hsluv {
 
         private static TestResult Compare(SnapshotEntry snapshot, ActualResult result)
         {
-            bool AlmostEquals(Double3 s, Vector3 actual, float range)
-                => AlmostEqualsDd(s.X, actual.x, range) &&
-                   AlmostEqualsDd(s.Y, actual.y, range) &&
-                   AlmostEqualsDd(s.Z, actual.z, range);
-
-            bool AlmostEqualsString(string s, string actual)
-            {
-                Vector3 snapshotSrgb = Hsluv.HexToSrgb(s);
-                Vector3 actualSrgb   = Hsluv.HexToSrgb(actual);
-                return AlmostEqualsDd(snapshotSrgb.x, actualSrgb.x, 255.0f) &&
-                       AlmostEqualsDd(snapshotSrgb.y, actualSrgb.y, 255.0f) &&
-                       AlmostEqualsDd(snapshotSrgb.z, actualSrgb.z, 255.0f);
-            }
-
-            bool AlmostEqualsDd(double s, double actual, double range)
-                => Mathf.Abs((float)(actual - s)) < (range / 4096.0f);
-
             TestResult r;
             bool       ok        = true;
             ok &= r.RgbFromHex   = AlmostEquals(snapshot.RGB,   result.RgbFromHex,   1.0f);
@@ -262,6 +244,23 @@ namespace Hsluv {
 
             r.Ok = ok;
             return r;
+
+            bool AlmostEquals(Double3 s, float3 actual, float range) =>
+                AlmostEqualsDd(s.X, actual.x, range) &&
+                AlmostEqualsDd(s.Y, actual.y, range) &&
+                AlmostEqualsDd(s.Z, actual.z, range);
+
+            bool AlmostEqualsString(string s, string actual)
+            {
+                float3 snapshotSrgb = Hsluv.HexToSrgb(s);
+                float3 actualSrgb   = Hsluv.HexToSrgb(actual);
+                return AlmostEqualsDd(snapshotSrgb.x, actualSrgb.x, 255.0f) &&
+                       AlmostEqualsDd(snapshotSrgb.y, actualSrgb.y, 255.0f) &&
+                       AlmostEqualsDd(snapshotSrgb.z, actualSrgb.z, 255.0f);
+            }
+
+            bool AlmostEqualsDd(double s, double actual, double range) =>
+                Mathf.Abs((float)(actual - s)) < (range / 4096.0f);
         }
 
         private readonly struct Double3 {
@@ -276,8 +275,8 @@ namespace Hsluv {
                 this.Z = z;
             }
 
-            public          Vector3 ToVector3() => new Vector3((float)X, (float)Y, (float)Z);
-            public override string  ToString()  => $"({X:R},{Y:R},{Z:R})";
+            public          float3 ToFloat3() => new((float)X, (float)Y, (float)Z);
+            public override string ToString() => $"({X:R},{Y:R},{Z:R})";
         }
     }
 }
