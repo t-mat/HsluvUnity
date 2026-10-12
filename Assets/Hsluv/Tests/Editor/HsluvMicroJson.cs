@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.IO;
 
@@ -60,7 +61,7 @@ namespace Hsluv {
                     Token.CURLY_OPEN => ParseObject(),
                     Token.SQUARED_OPEN => ParseArray(),
                     Token.STRING => ParseString(),
-                    Token.NUMBER => double.TryParse(NextWord(), out double d) ? d : 0.0,
+                    Token.NUMBER => double.TryParse(NextWord(), NumberStyles.Float, CultureInfo.InvariantCulture, out double d) ? d : 0.0,
                     Token.TRUE => true,
                     Token.FALSE => false,
                     _ => null
@@ -101,7 +102,8 @@ namespace Hsluv {
                 while (true) {
                     Token nextToken = NextToken();
                     switch (nextToken) {
-                        case Token.NONE: return null;
+                        case Token.NONE:
+                        case Token.COLON: return null; // ':' is not consumed by NextToken()
                         case Token.SQUARED_CLOSE: return array;
                         case Token.COMMA: continue;
                         default:
